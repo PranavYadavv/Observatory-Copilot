@@ -3,8 +3,8 @@
  * Wraps all REST endpoints from TRD §4.1.
  */
 
-const API_BASE = 'http://localhost:8000/api/v1';
-const API_KEY = 'demo-key-2026';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api/v1';
+const API_KEY = import.meta.env.VITE_API_KEY || '';
 
 interface RequestOptions {
   method?: string;
@@ -29,8 +29,11 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'X-API-Key': API_KEY,
   };
+
+  if (API_KEY) {
+    headers['X-API-Key'] = API_KEY;
+  }
 
   const res = await fetch(url, {
     method,
