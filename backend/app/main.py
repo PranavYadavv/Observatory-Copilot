@@ -65,11 +65,7 @@ app.add_middleware(
 )
 
 
-# ── Auth Middleware (simplified for demo) ───────────
-async def verify_api_key(x_api_key: Optional[str] = Header(None)):
-    """Verify X-API-Key header. Simplified: also accepts query param for easy testing."""
-    if not x_api_key:
-        return None  # Allow unauthenticated for demo
+async def is_valid_api_key(x_api_key: str) -> bool:
     db = await get_db()
     rows = await db.execute_fetchall(
         "SELECT key_hash FROM api_keys WHERE revoked_at IS NULL"
@@ -77,7 +73,25 @@ async def verify_api_key(x_api_key: Optional[str] = Header(None)):
     for row in rows:
         if bcrypt.checkpw(x_api_key.encode(), row["key_hash"].encode()):
             return True
-    return None
+    return False
+
+
+async def verify_api_key(x_api_key: Optional[str] = Header(None)):
+    """Verify X-API-Key header and reject missing or invalid keys."""
+    if not x_api_key:
+        raise HTTPException(status_code=401, detail="Missing X-API-Key header")
+    if not await is_valid_api_key(x_api_key):
+        raise HTTPException(status_code=403, detail="Invalid API key")
+    return True
+
+
+@app.middleware("http")
+async def enforce_api_key(request: Request, call_next):
+    if request.url.path.startswith("/api/v1"):
+        x_api_key = request.headers.get("x-api-key")
+        if not x_api_key or not await is_valid_api_key(x_api_key):
+            return error("unauthorized", "Missing or invalid X-API-Key", status_code=401)
+    return await call_next(request)
 
 
 # ── Response helpers ────────────────────────────────
@@ -476,6 +490,11 @@ async def get_baselines():
 
 @app.websocket("/ws/incidents")
 async def websocket_endpoint(websocket: WebSocket):
+    x_api_key = websocket.headers.get("x-api-key") or websocket.query_params.get("api_key")
+    if not x_api_key or not await is_valid_api_key(x_api_key):
+        await websocket.close(code=1008)
+        return
+
     await websocket.accept()
     _ws_clients.append(websocket)
     
