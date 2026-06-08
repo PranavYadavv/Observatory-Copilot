@@ -1,0 +1,45 @@
+databases: []
+
+services:
+  # ── Backend (FastAPI) ────────────────────────────
+  - type: web
+    name: observatory-copilot-api
+    runtime: python
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: PORT
+        value: "10000"
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+
+  # ── Frontend (Vite Static Site) ──────────────────
+  - type: web
+    name: observatory-copilot-ui
+    runtime: static
+    region: oregon
+    plan: free
+    rootDir: Frontend/app
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: VITE_API_BASE
+        sync: false
+      - key: VITE_API_KEY
+        sync: false
+    autoDeploy: true

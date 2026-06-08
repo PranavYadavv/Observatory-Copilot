@@ -116,6 +116,15 @@ export const api = {
 
 // ── WebSocket ────────────────────────────────────
 
+function getWsUrl(): string {
+  const base = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api/v1';
+  // Strip /api/v1 suffix to get the root origin
+  const origin = base.replace(/\/api\/v1\/?$/, '');
+  // Convert http(s) → ws(s)
+  const wsOrigin = origin.replace(/^http/, 'ws');
+  return `${wsOrigin}/ws/incidents`;
+}
+
 export function connectIncidentStream(
   onIncident: (incident: any) => void,
   onConnect?: () => void,
@@ -125,7 +134,7 @@ export function connectIncidentStream(
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
   function connect() {
-    ws = new WebSocket('ws://localhost:8000/ws/incidents');
+    ws = new WebSocket(getWsUrl());
 
     ws.onopen = () => {
       console.log('[WS] Connected to incident stream');
