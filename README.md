@@ -2,7 +2,7 @@
   <img src="Frontend/final-hero.png" alt="Observability Co-Pilot" width="100%" />
 </p>
 
-<h1 align="center">🔭 Observability Co-Pilot</h1>
+<h1 align="center">🔭Observability Co-Pilot</h1>
 
 <p align="center">
   <strong>AI-powered root cause analysis for distributed systems</strong>
