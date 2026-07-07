@@ -1,7 +1,7 @@
 <p align="center">
   <img src="Frontend/final-hero.png" alt="Observability Co-Pilot" width="100%" />
 </p>
-
+  
 <h1 align="center">🔭Observability Co-Pilot</h1>
 
 <p align="center">
